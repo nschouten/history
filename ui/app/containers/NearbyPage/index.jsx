@@ -63,7 +63,8 @@ import messages from './messages';
       e.target.style.border='2px solid pink';
     }
 
-    if (!listImages) return "no available pictures";
+    if (!listImages) return (
+      <h1>No available pictures found.</h1>);
 
     return (
       <article>
