@@ -1,9 +1,9 @@
 /* eslint consistent-return:0 import/order:0 */
-
 const express = require('express');
 // eslint-disable-next-line import/no-extraneous-dependencies
 const ngrokMod = require('ngrok');
 const { resolve } = require('path');
+const cors = require('cors');
 
 const logger = require('./logger');
 const argv = require('./argv');
@@ -15,15 +15,48 @@ const ngrok =
   (isDev && process.env.ENABLE_TUNNEL) || argv.tunnel ? ngrokMod : false;
 
 const app = express();
+// const port = 3000;
+const credentials = require('./credentials.js');
+
+
+app.use(cors({
+  origin: [
+    'http://localhost:3000',
+  ],
+}));
 
 // If you need a backend, e.g. an API, add your custom backend-specific middleware here
 // app.use('/api', myApi);
+
+app.get('/api/geo', async (req, res) => {
+  try {
+    const serviceRoot = 'https://www.flickr.com/services/rest/';
+    const baseQuery = `?method=flickr.photos.search&api_key=${credentials.flickr.api_key}&format=json&nojsoncallback=1`;
+    const geoQuery = '&lat=49.282705&lon=-123.115326&radius=1';
+
+    const serviceURL = `${serviceRoot}${baseQuery}${geoQuery}`;
+    const response = await fetch(serviceURL);
+    const result = await response.json();
+
+    const flickrImgPath = (image) => `https://live.staticflickr.com/${image.server}/${image.id}_${image.secret}_w.jpg`;
+
+    const images = result.photos.photo.map((photo) => ({
+      src: flickrImgPath(photo),
+    }));
+
+    res.send({ images });
+  } catch (error) {
+    res.send({ error: error.message });
+  }
+});
 
 // In production we need to pass these values in instead of relying on webpack
 setup(app, {
   outputPath: resolve(process.cwd(), 'build'),
   publicPath: '/',
 });
+
+
 
 // get the intended host and port number, use localhost and port 3000 if not provided
 const customHost = argv.host || process.env.HOST;
