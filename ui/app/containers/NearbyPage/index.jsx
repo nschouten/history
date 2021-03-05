@@ -64,7 +64,7 @@ import messages from './messages';
     }
 
     if (!listImages) return (
-      <h1>No available pictures found.</h1>);
+      <h1>Sorry, no available pictures were found</h1>);
 
     return (
       <article>
